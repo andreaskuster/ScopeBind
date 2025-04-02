@@ -18,10 +18,15 @@ if __name__ == "__main__":
 
     # Setup the oscilloscope device connection
     scope = Device()
-    scope.connect()  # Connect to the device
+    scope.start()  # Connect to the device
 
     # Read some data (assuming data is raw signal data in bytes)
     raw_data = scope.read(1024)  # Reading 1024 bytes of data
+
+    while True:
+        pass
+
+    # scope.stop()
 
     # Assuming the data is a simple byte array, we'll convert it to a numpy array
     signal = np.array(raw_data, dtype=np.float32)
