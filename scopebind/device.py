@@ -3,6 +3,7 @@ import ctypes
 import queue
 import time
 import threading
+from collections import deque
 
 
 class Device:
@@ -29,7 +30,8 @@ class Device:
         os.add_dll_directory(os.path.join(dir_path, "SharedLibrary/Windows/X64/Release"))
 
         # Initialize the data queue
-        self.data_queue = queue.Queue()
+        # self.data_queue = queue.Queue()
+        self.data_queue = deque()
         self.data_queue_lock = threading.Lock()  # Create a lock to protect the shared resource
 
     def start(self):
@@ -124,10 +126,10 @@ class Device:
             print(' minv', minv)
             print(' maxv', maxv)
 
-            with self.data_queue_lock:
+            with self.data_queue_lock: # this is now faster, but still not efficient!
                 for item in datas:
-                    self.data_queue.put(item)
-
+                    # self.data_queue.put(item)
+                    self.data_queue.append(item)
             # Next Capture
             length = fGetMemoryLength();
             fCapture(length);
@@ -201,7 +203,7 @@ class Device:
         # while True:
         #     pass
 
-    def read(self, size: int = 64) -> bytes:
+    def read(self, size: int = 64) -> bytes: # this is now faster, but still not efficient!
         """
         Read data from the oscilloscope device.
 
@@ -212,7 +214,8 @@ class Device:
         while len(data) < size:
             with self.data_queue_lock:
                 try:
-                    item = self.data_queue.get(block=False)
+                    # item = self.data_queue.get(block=False)
+                    item = self.data_queue.popleft()
                     data.append(item)
                 except:
                     pass
