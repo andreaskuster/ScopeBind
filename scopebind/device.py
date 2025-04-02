@@ -34,7 +34,7 @@ class Device:
         self.data_queue = deque()
         self.data_queue_lock = threading.Lock()  # Create a lock to protect the shared resource
 
-    def start(self):
+    def start(self, sampling_rate, voltage_range):
         """
         Connect to the USB oscilloscope device.
         """
@@ -156,8 +156,12 @@ class Device:
             print('## ch1 coupling type ', fGetAcDc(1))
 
             ## set range to +/- 5000mV
-            print('## ch0 range set: ', fSetOscChannelRange(0, -6000, 6000))
-            print('## ch1 range set: ', fSetOscChannelRange(1, -6000, 6000))
+            # print('## ch0 range set: ', fSetOscChannelRange(0, -5000, 5000))
+            # print('## ch1 range set: ', fSetOscChannelRange(1, -5000, 5000))
+            print('## ch0 range set: ', fSetOscChannelRange(0, voltage_range[0], voltage_range[1]))
+            print('## ch1 range set: ', fSetOscChannelRange(1, voltage_range[0], voltage_range[1]))
+
+
 
             ## Sample
             samplenum = fGetOscSupportSampleNum()
@@ -171,7 +175,7 @@ class Device:
 
             # fSetOscSupportSamples(samples[samplenum-1]); # highest sampling rate
             # fSetOscSupportSamples(samples[0])  # lowest sampling rate
-            fSetOscSupportSamples(4000000)
+            fSetOscSupportSamples(sampling_rate)
 
             length = fGetMemoryLength()
             print('## MemoryLength ', length * 1024)

@@ -17,14 +17,14 @@ def perform_fft(data: np.ndarray, sampling_rate: float) -> np.ndarray:
 if __name__ == "__main__":
 
     sampling_rate = 4000000  # supported: [1000000, 4000000, 8000000, 16000000, 48000000]
-
+    voltage_range = (0, 5000)  # in mV
 
     # Setup the oscilloscope device connection
     scope = Device()
-    scope.start()  # Connect to the device
+    scope.start(sampling_rate, voltage_range)  # Connect to the device
 
     # Read some data (assuming data is raw signal data in bytes)
-    raw_data = scope.read(1024*1024)  # Reading  bytes of data
+    raw_data = scope.read(1024*4)  # Reading  bytes of data
 
     scope.stop()
 
@@ -37,8 +37,9 @@ if __name__ == "__main__":
     # Time plot (assuming the signal is sampled at 1kHz)
     time = np.arange(len(signal))  # Time array (in samples)
     plt.subplot(2, 1, 1)
-    plt.plot(time[:200], signal[:200], label="Signal (First 200 samples)")
-    plt.title("Time Domain Signal (First 200 Samples)")
+    LEN = 50
+    plt.plot(time[:LEN], signal[:LEN], label=f"Signal (First {LEN} samples)")
+    plt.title(f"Time Domain Signal (First {LEN} Samples)")
     plt.xlabel("Time (samples)")
     plt.ylabel("Amplitude")
     plt.legend()
