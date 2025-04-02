@@ -1,0 +1,8 @@
+numpy
+scipy
+matplotlib
+pyusb
+pywinusb
+pywin32
+pyudev
+libusb1
