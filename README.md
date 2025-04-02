@@ -25,13 +25,14 @@ from scopebind.device import Device
 sampling_rate = 4000000  # Supported: [1000000, 4000000, 8000000, 16000000, 48000000]
 voltage_range = (0, 5000)  # in mV
 
-# Setup the oscilloscope device connection
+# Setup the oscilloscope device connection & start capturing data
 scope = Device()
-scope.start(sampling_rate, voltage_range)  # Connect to the device
+scope.start(sampling_rate, voltage_range)  
 
-# Read some data (assuming data is raw signal data in bytes)
+# Read data
 raw_data = scope.read(1024*4)  # Reading 4 KB of data
 
+# Stop the capture
 scope.stop()
 ```
 
