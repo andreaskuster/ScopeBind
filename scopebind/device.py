@@ -1,7 +1,10 @@
 import os
 import ctypes
-import usb.core
-import usb.util
+import queue
+import time
+import threading
+
+
 class Device:
     """
         Supported & Tested Devices:
@@ -25,8 +28,11 @@ class Device:
         dir_path = os.path.dirname(os.path.realpath(__file__))
         os.add_dll_directory(os.path.join(dir_path, "SharedLibrary/Windows/X64/Release"))
 
+        # Initialize the data queue
+        self.data_queue = queue.Queue()
+        self.data_queue_lock = threading.Lock()  # Create a lock to protect the shared resource
 
-    def setup(self):
+    def start(self):
         """
         Connect to the USB oscilloscope device.
         """
@@ -118,6 +124,10 @@ class Device:
             print(' minv', minv)
             print(' maxv', maxv)
 
+            with self.data_queue_lock:
+                for item in datas:
+                    self.data_queue.put(item)
+
             # Next Capture
             length = fGetMemoryLength();
             fCapture(length);
@@ -130,8 +140,7 @@ class Device:
 
             ## test not used
             while not fIsDevAvailable():
-                print("Not yet available")
-                import time
+                print("Not yet available, re-plug USB oscilloscope")
                 time.sleep(1.0)
                 fResetDevice()
             print('## connection ok:', fIsDevAvailable())
@@ -145,8 +154,8 @@ class Device:
             print('## ch1 coupling type ', fGetAcDc(1))
 
             ## set range to +/- 5000mV
-            print('## ch0 range set: ', fSetOscChannelRange(0, -5000, 5000))
-            print('## ch1 range set: ', fSetOscChannelRange(1, -5000, 5000))
+            print('## ch0 range set: ', fSetOscChannelRange(0, -6000, 6000))
+            print('## ch1 range set: ', fSetOscChannelRange(1, -6000, 6000))
 
             ## Sample
             samplenum = fGetOscSupportSampleNum()
@@ -159,12 +168,13 @@ class Device:
                 print(s)
 
             # fSetOscSupportSamples(samples[samplenum-1]); # highest sampling rate
-            fSetOscSupportSamples(samples[0])  # lowest sampling rate
+            # fSetOscSupportSamples(samples[0])  # lowest sampling rate
+            fSetOscSupportSamples(4000000)
 
             length = fGetMemoryLength()
             print('## MemoryLength ', length * 1024)
 
-            para = ctypes.c_void_p(2000)
+            para = ctypes.c_void_p(p+1)
             fSetDataReadyCallBack(para, DevDataReadyCallBack_func)
             fCapture(length)
 
@@ -178,13 +188,18 @@ class Device:
             return 0
 
         # 1000 is just test
-        para = ctypes.c_void_p(1000)
+        para = ctypes.c_void_p(1)
         # fSetDevNoticeCallBack(para, DevNoticeAddCallBack_func, DevNoticeRemoveCallBack_func)
 
-        DevNoticeAddCallBack_func(1)
+        # store callback function references
+        self.DevDataReadyCallBack_func = DevDataReadyCallBack_func
+        self.DevNoticeAddCallBack_func = DevNoticeAddCallBack_func
+        self.DevNoticeRemoveCallBack_func = DevNoticeRemoveCallBack_func
 
-        while True:
-            pass
+        self.DevNoticeAddCallBack_func(para)
+
+        # while True:
+        #     pass
 
     def read(self, size: int = 64) -> bytes:
         """
@@ -193,11 +208,16 @@ class Device:
         :param size: Number of bytes to read
         :return: Data read from the device
         """
-        pass
+        data = []
+        while len(data) < size:
+            with self.data_queue_lock:
+                try:
+                    item = self.data_queue.get(block=False)
+                    data.append(item)
+                except:
+                    pass
+        return data
 
 
-
-
-
-
-
+    def stop(self):
+        self.DevNoticeRemoveCallBack_func(1)

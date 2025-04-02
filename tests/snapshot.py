@@ -16,17 +16,17 @@ def perform_fft(data: np.ndarray, sampling_rate: float) -> np.ndarray:
 
 if __name__ == "__main__":
 
+    sampling_rate = 4000000  # supported: [1000000, 4000000, 8000000, 16000000, 48000000]
+
+
     # Setup the oscilloscope device connection
     scope = Device()
     scope.start()  # Connect to the device
 
     # Read some data (assuming data is raw signal data in bytes)
-    raw_data = scope.read(1024)  # Reading 1024 bytes of data
+    raw_data = scope.read(1024*1024)  # Reading  bytes of data
 
-    while True:
-        pass
-
-    # scope.stop()
+    scope.stop()
 
     # Assuming the data is a simple byte array, we'll convert it to a numpy array
     signal = np.array(raw_data, dtype=np.float32)
@@ -44,7 +44,6 @@ if __name__ == "__main__":
     plt.legend()
 
     # Perform and plot the FFT
-    sampling_rate = 1000  # Assuming 1kHz sampling rate, change this if needed
     fft_freqs, fft_magnitudes = perform_fft(signal, sampling_rate)
 
     plt.subplot(2, 1, 2)
